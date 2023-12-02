@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
     }
 })
 
-router.put('/save', async (req, res)=> {
+router.put('/', async (req, res)=> {
     try {
         const recipe = await RecipeModel.findById(req.body.recipeID)
         const user = await UserModel.findById(req.body.userID)
@@ -39,18 +39,35 @@ router.put('/save', async (req, res)=> {
     }
 })
 
-router.get('/savedRecipes/ids', async(req,res)=> {
+router.post('/deleteSaved', async (req, res)=> {
     try {
-        const user = UserModel.findById(req.body.userID);
-        res.json({savedRecipes:user.savedRecipes})
-    } catch (error) {
+        const recipe = await RecipeModel.findById(req.body.recipeID);
+        const user = await UserModel.findById(req.body.userID);
+    
+        // Use filter to create a new array excluding the specified recipe
+        const copySavedRecipes = user.savedRecipes.filter(item => item.toString() !== recipe._id.toString());
+    
+        user.savedRecipes = copySavedRecipes;
+        await user.save();
+        res.json({ savedRecipes: user.savedRecipes });
+      } catch (error) {
         console.error(error)
     }
 })
 
-router.get('/savedRecipes', async ()=> {
+router.get('/savedRecipeIds/:userID', async(req,res)=> {
     try {
-        const user = await UserModel.findById(req.body.userID);
+        const user = await UserModel.findById(`${req.params.userID}`)
+        res.json({savedRecipes:user.savedRecipes})
+    } catch (error) {
+        console.error(error)
+    }
+}) 
+
+
+router.get('/savedRecipes/:userID', async (req, res)=> {
+    try {
+        const user = await UserModel.findById(req.params.userID);
         const savedRecipes = await RecipeModel.find({
             _id:{$in: user.savedRecipes}
         })
